@@ -14,14 +14,31 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [
         "http://localhost:8080/swagger/oauth2-redirect.html",
-        "http://localhost:8080/*"
+        "http://localhost:8080/*",
+        "http://127.0.0.1:8080/swagger/oauth2-redirect.html",
+        "http://127.0.0.1:8080/*"
       ],
       "webOrigins": [
-        "http://localhost:8080"
+        "http://localhost:8080",
+        "http://127.0.0.1:8080"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-public-client",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "included.client.audience": "public-client",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [

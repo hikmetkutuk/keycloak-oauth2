@@ -121,10 +121,8 @@ public static class ServiceCollectionExtensions
                 {
                     ValidateIssuer = true,
                     ValidIssuer = issuer,
-                    // Keycloak public-client access tokens do not always expose the
-                    // client id in the aud claim by default, so keep this relaxed
-                    // until an audience mapper is configured on the realm.
-                    ValidateAudience = false,
+                    ValidateAudience = true,
+                    ValidAudience = audience,
                     NameClaimType = "preferred_username",
                     RoleClaimType = "roles"
                 };

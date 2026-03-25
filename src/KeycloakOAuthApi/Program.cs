@@ -27,7 +27,11 @@ app.MapControllers();
 
 app.MapGet("users/me", (ClaimsPrincipal claimsPrincipal) =>
 {
-    return claimsPrincipal.Claims.ToDictionary(c => c.Type, c => c.Value);
+    return claimsPrincipal.Claims
+        .GroupBy(claim => claim.Type)
+        .ToDictionary(
+            group => group.Key,
+            group => group.Select(claim => claim.Value).ToArray());
 }).RequireAuthorization();
 
 await app.RunAsync();
