@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -102,23 +100,30 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var issuer = configuration["Keycloak:Issuer"]
-            ?? throw new InvalidOperationException("Missing configuration value: Keycloak:Issuer");
+        var audience = configuration["Authentication:Audience"]
+            ?? throw new InvalidOperationException("Missing configuration value: Authentication:Audience");
 
-        var metadataAddress = configuration["Keycloak:MetadataAddress"]
-            ?? throw new InvalidOperationException("Missing configuration value: Keycloak:MetadataAddress");
+        var issuer = configuration["Authentication:Issuer"]
+            ?? throw new InvalidOperationException("Missing configuration value: Authentication:Issuer");
+
+        var metadataAddress = configuration["Authentication:MetadataAddress"]
+            ?? throw new InvalidOperationException("Missing configuration value: Authentication:MetadataAddress");
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
                 options.RequireHttpsMetadata = false;
+                options.Audience = audience;
                 options.MetadataAddress = metadataAddress;
                 options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidIssuer = issuer,
+                    // Keycloak public-client access tokens do not always expose the
+                    // client id in the aud claim by default, so keep this relaxed
+                    // until an audience mapper is configured on the realm.
                     ValidateAudience = false,
                     NameClaimType = "preferred_username",
                     RoleClaimType = "roles"
