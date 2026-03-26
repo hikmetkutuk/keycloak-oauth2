@@ -1,13 +1,9 @@
 # Keycloak OAuth2 .NET API
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/hikmetkutuk/keycloak-oauth2?color=inactive&logo=github&style=for-the-badge)
-
 ![.NetCore](https://img.shields.io/static/v1?&logo=.net&label=.NET&message=10&color=5c2d91&style=for-the-badge)
-
 ![Keycloak](https://img.shields.io/static/v1?&logo=JSON%20web%20tokens&label=Keycloak&message=26.0.0&color=E8336B&style=for-the-badge)
-
 ![PostgreSQL](https://img.shields.io/static/v1?logo=postgresql&label=PostgreSQL&message=17&color=336791&style=for-the-badge)
-
 ![Docker](https://img.shields.io/static/v1?logo=docker&label=Docker&message=29&color=086dd7&style=for-the-badge)
 
 ## Proje Açıklaması
