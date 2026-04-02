@@ -11,123 +11,122 @@ public static class ServiceCollectionExtensions
     private const string ServiceName = "Keycloak.OAuth.Api";
     private const string SwaggerScheme = "Keycloak";
 
-    public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
+    extension(IServiceCollection services)
     {
-        services.AddControllers();
-        services.AddEndpointsApiExplorer();
-        services.AddAuthorization();
-        services.AddKeycloakAuthentication(configuration);
-        services.AddSwaggerDocumentation(configuration);
-        services.AddOpenTelemetryServices();
-
-        return services;
-    }
-
-    public static IServiceCollection AddOpenTelemetryServices(this IServiceCollection services)
-    {
-        services
-            .AddOpenTelemetry()
-            .ConfigureResource(resource => resource.AddService(ServiceName))
-            .WithTracing(tracing =>
-            {
-                tracing
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
-            });
-
-        return services;
-    }
-
-    private static IServiceCollection AddSwaggerDocumentation(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var authorizationUrl = configuration["Keycloak:AuthorizationUrl"]
-            ?? throw new InvalidOperationException("Missing configuration value: Keycloak:AuthorizationUrl");
-
-        var tokenUrl = configuration["Keycloak:TokenUrl"]
-            ?? throw new InvalidOperationException("Missing configuration value: Keycloak:TokenUrl");
-
-        services.AddSwaggerGen(options =>
+        private void AddOpenTelemetryServices()
         {
-            options.SwaggerDoc("v1", new OpenApiInfo
-            {
-                Title = "Keycloak OAuth API",
-                Version = "v1",
-                Description = "Sample .NET 10 API secured with Keycloak and OAuth 2.0."
-            });
-
-            options.CustomSchemaIds(type => type.FullName?.Replace('+', '-'));
-
-            options.AddSecurityDefinition(SwaggerScheme, new OpenApiSecurityScheme
-            {
-                Type = SecuritySchemeType.OAuth2,
-                Flows = new OpenApiOAuthFlows
+            services
+                .AddOpenTelemetry()
+                .ConfigureResource(resource => resource.AddService(ServiceName))
+                .WithTracing(tracing =>
                 {
-                    AuthorizationCode = new OpenApiOAuthFlow
+                    tracing
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation();
+                });
+        }
+
+        public IServiceCollection AddApiServices(IConfiguration configuration)
+        {
+            services.AddControllers();
+            services.AddEndpointsApiExplorer();
+            services.AddAuthorization();
+            services.AddKeycloakAuthentication(configuration);
+            services.AddSwaggerDocumentation(configuration);
+            services.AddOpenTelemetryServices();
+
+            return services;
+        }
+    }
+
+    extension(IServiceCollection services)
+    {
+        private void AddSwaggerDocumentation(IConfiguration configuration)
+        {
+            var authorizationUrl = configuration["Keycloak:AuthorizationUrl"]
+                                   ?? throw new InvalidOperationException(
+                                       "Missing configuration value: Keycloak:AuthorizationUrl");
+
+            var tokenUrl = configuration["Keycloak:TokenUrl"]
+                           ?? throw new InvalidOperationException("Missing configuration value: Keycloak:TokenUrl");
+
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Keycloak OAuth API",
+                    Version = "v1",
+                    Description = "Sample .NET 10 API secured with Keycloak and OAuth 2.0."
+                });
+
+                options.CustomSchemaIds(type => type.FullName?.Replace('+', '-'));
+
+                options.AddSecurityDefinition(SwaggerScheme, new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
                     {
-                        AuthorizationUrl = new Uri(authorizationUrl),
-                        TokenUrl = new Uri(tokenUrl),
-                        Scopes = new Dictionary<string, string>
+                        AuthorizationCode = new OpenApiOAuthFlow
                         {
-                            ["openid"] = "OpenID Connect scope",
-                            ["profile"] = "User profile scope"
+                            AuthorizationUrl = new Uri(authorizationUrl),
+                            TokenUrl = new Uri(tokenUrl),
+                            Scopes = new Dictionary<string, string>
+                            {
+                                ["openid"] = "OpenID Connect scope",
+                                ["profile"] = "User profile scope"
+                            }
                         }
                     }
-                }
-            });
+                });
 
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
-                    new OpenApiSecurityScheme
                     {
-                        Reference = new OpenApiReference
+                        new OpenApiSecurityScheme
                         {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = SwaggerScheme
-                        }
-                    },
-                    ["openid", "profile"]
-                }
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = SwaggerScheme
+                            }
+                        },
+                        ["openid", "profile"]
+                    }
+                });
             });
-        });
+        }
 
-        return services;
-    }
+        private void AddKeycloakAuthentication(IConfiguration configuration)
+        {
+            var audience = configuration["Authentication:Audience"]
+                           ?? throw new InvalidOperationException(
+                               "Missing configuration value: Authentication:Audience");
 
-    private static IServiceCollection AddKeycloakAuthentication(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var audience = configuration["Authentication:Audience"]
-            ?? throw new InvalidOperationException("Missing configuration value: Authentication:Audience");
+            var issuer = configuration["Authentication:Issuer"]
+                         ?? throw new InvalidOperationException("Missing configuration value: Authentication:Issuer");
 
-        var issuer = configuration["Authentication:Issuer"]
-            ?? throw new InvalidOperationException("Missing configuration value: Authentication:Issuer");
+            var metadataAddress = configuration["Authentication:MetadataAddress"]
+                                  ?? throw new InvalidOperationException(
+                                      "Missing configuration value: Authentication:MetadataAddress");
 
-        var metadataAddress = configuration["Authentication:MetadataAddress"]
-            ?? throw new InvalidOperationException("Missing configuration value: Authentication:MetadataAddress");
-
-        services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = false;
-                options.Audience = audience;
-                options.MetadataAddress = metadataAddress;
-                options.MapInboundClaims = false;
-                options.TokenValidationParameters = new TokenValidationParameters
+            services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidIssuer = issuer,
-                    ValidateAudience = true,
-                    ValidAudience = audience,
-                    NameClaimType = "preferred_username",
-                    RoleClaimType = "roles"
-                };
-            });
-
-        return services;
+                    options.RequireHttpsMetadata = false;
+                    options.Audience = audience;
+                    options.MetadataAddress = metadataAddress;
+                    options.MapInboundClaims = false;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = issuer,
+                        ValidateAudience = true,
+                        ValidAudience = audience,
+                        NameClaimType = "preferred_username",
+                        RoleClaimType = "roles"
+                    };
+                });
+        }
     }
 }
