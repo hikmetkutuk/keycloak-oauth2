@@ -7,6 +7,11 @@ builder.Services.AddApiServices(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseExceptionHandler(exceptionHandler =>
+{
+    exceptionHandler.Run(context => Results.Problem().ExecuteAsync(context));
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -33,5 +38,8 @@ app.MapGet("users/me", (ClaimsPrincipal claimsPrincipal) =>
             group => group.Key,
             group => group.Select(claim => claim.Value).ToArray());
 }).RequireAuthorization();
+
+app.MapGet("/health", () => TypedResults.Ok(new { status = "ok", timestamp = DateTimeOffset.UtcNow }))
+    .AllowAnonymous();
 
 await app.RunAsync();

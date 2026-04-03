@@ -15,12 +15,18 @@
       "redirectUris": [
         "http://localhost:8080/swagger/oauth2-redirect.html",
         "http://localhost:8080/*",
+        "http://localhost:8082/swagger/oauth2-redirect.html",
+        "http://localhost:8082/*",
         "http://127.0.0.1:8080/swagger/oauth2-redirect.html",
-        "http://127.0.0.1:8080/*"
+        "http://127.0.0.1:8080/*",
+        "http://127.0.0.1:8082/swagger/oauth2-redirect.html",
+        "http://127.0.0.1:8082/*"
       ],
       "webOrigins": [
         "http://localhost:8080",
-        "http://127.0.0.1:8080"
+        "http://127.0.0.1:8080",
+        "http://localhost:8082",
+        "http://127.0.0.1:8082"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
@@ -39,12 +45,48 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "cli-client",
+      "name": "cli-client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocolMappers": [
+        {
+          "name": "audience-public-client",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "included.client.audience": "public-client",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
+  "roles": {
+    "realm": [
+      {
+        "name": "admin"
+      },
+      {
+        "name": "user"
+      }
+    ]
+  },
   "users": [
     {
       "username": "demo",
       "enabled": true,
+      "email": "demo@example.local",
       "emailVerified": true,
       "firstName": "Demo",
       "lastName": "User",
@@ -54,6 +96,28 @@
           "value": "demo123",
           "temporary": false
         }
+      ],
+      "realmRoles": [
+        "user"
+      ]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@example.local",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin",
+        "user"
       ]
     }
   ]

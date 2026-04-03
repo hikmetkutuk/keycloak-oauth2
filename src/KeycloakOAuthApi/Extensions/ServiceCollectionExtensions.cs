@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using KeycloakOAuthApi.Infrastructure;
+using KeycloakOAuthApi.Security;
 
 namespace KeycloakOAuthApi.Extensions;
 
@@ -13,6 +16,29 @@ public static class ServiceCollectionExtensions
 
     extension(IServiceCollection services)
     {
+        public IServiceCollection AddApiServices(IConfiguration configuration)
+        {
+            services.AddControllers();
+            services.AddEndpointsApiExplorer();
+            services.AddProblemDetails();
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(AuthorizationPolicies.AdminOnly, policy =>
+                {
+                    policy.RequireRole(Roles.Admin);
+                });
+            });
+
+            services.AddSingleton<IClaimsTransformation, KeycloakRealmRoleClaimsTransformation>();
+            services.AddSingleton<ICommerceStore, InMemoryCommerceStore>();
+
+            services.AddKeycloakAuthentication(configuration);
+            services.AddSwaggerDocumentation(configuration);
+            services.AddOpenTelemetryServices();
+
+            return services;
+        }
+
         private void AddOpenTelemetryServices()
         {
             services
@@ -26,26 +52,10 @@ public static class ServiceCollectionExtensions
                 });
         }
 
-        public IServiceCollection AddApiServices(IConfiguration configuration)
-        {
-            services.AddControllers();
-            services.AddEndpointsApiExplorer();
-            services.AddAuthorization();
-            services.AddKeycloakAuthentication(configuration);
-            services.AddSwaggerDocumentation(configuration);
-            services.AddOpenTelemetryServices();
-
-            return services;
-        }
-    }
-
-    extension(IServiceCollection services)
-    {
         private void AddSwaggerDocumentation(IConfiguration configuration)
         {
             var authorizationUrl = configuration["Keycloak:AuthorizationUrl"]
-                                   ?? throw new InvalidOperationException(
-                                       "Missing configuration value: Keycloak:AuthorizationUrl");
+                                   ?? throw new InvalidOperationException("Missing configuration value: Keycloak:AuthorizationUrl");
 
             var tokenUrl = configuration["Keycloak:TokenUrl"]
                            ?? throw new InvalidOperationException("Missing configuration value: Keycloak:TokenUrl");
@@ -99,15 +109,13 @@ public static class ServiceCollectionExtensions
         private void AddKeycloakAuthentication(IConfiguration configuration)
         {
             var audience = configuration["Authentication:Audience"]
-                           ?? throw new InvalidOperationException(
-                               "Missing configuration value: Authentication:Audience");
+                           ?? throw new InvalidOperationException("Missing configuration value: Authentication:Audience");
 
             var issuer = configuration["Authentication:Issuer"]
                          ?? throw new InvalidOperationException("Missing configuration value: Authentication:Issuer");
 
             var metadataAddress = configuration["Authentication:MetadataAddress"]
-                                  ?? throw new InvalidOperationException(
-                                      "Missing configuration value: Authentication:MetadataAddress");
+                                  ?? throw new InvalidOperationException("Missing configuration value: Authentication:MetadataAddress");
 
             services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
