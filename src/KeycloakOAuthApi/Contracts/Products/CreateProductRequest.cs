@@ -1,29 +1,21 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KeycloakOAuthApi.Contracts.Products;
 
+[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global", Justification = "Model binding contract.")]
 public sealed class CreateProductRequest
 {
-    [JsonConstructor]
-    public CreateProductRequest(string? name, string? description, decimal price, int stockQuantity)
-    {
-        Name = name ?? string.Empty;
-        Description = description;
-        Price = price;
-        StockQuantity = stockQuantity;
-    }
-
     [Required(AllowEmptyStrings = false)]
     [MaxLength(150)]
-    public string Name { get; }
+    public string Name { get; set; } = string.Empty;
 
     [MaxLength(500)]
-    public string? Description { get; }
+    public string? Description { get; set; }
 
-    [Range(typeof(decimal), "0.01", "1000000")]
-    public decimal Price { get; }
+    [Range(typeof(decimal), "0.01", "1000000", ParseLimitsInInvariantCulture = true, ConvertValueInInvariantCulture = true)]
+    public decimal Price { get; set; }
 
     [Range(0, 1000000)]
-    public int StockQuantity { get; }
+    public int StockQuantity { get; set; }
 }

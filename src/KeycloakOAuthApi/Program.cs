@@ -7,10 +7,17 @@ builder.Services.AddApiServices(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseExceptionHandler(exceptionHandler =>
+if (app.Environment.IsEnvironment("Testing"))
 {
-    exceptionHandler.Run(context => Results.Problem().ExecuteAsync(context));
-});
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler(exceptionHandler =>
+    {
+        exceptionHandler.Run(context => Results.Problem().ExecuteAsync(context));
+    });
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -43,3 +50,10 @@ app.MapGet("/health", () => TypedResults.Ok(new { status = "ok", timestamp = Dat
     .AllowAnonymous();
 
 await app.RunAsync();
+
+public partial class Program
+{
+    protected Program()
+    {
+    }
+}
